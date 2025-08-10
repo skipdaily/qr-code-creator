@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Creator (Live Preview)</title>
+    <!-- QRCode.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- JSZip and FileSaver for batch download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body {font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f7f7f7; color: #333;}
+        header {background: #2c3e50; color: #ecf0f1; padding: 1em; text-align: center;}
+        main {padding: 1em; max-width: 800px; margin: 0 auto;}
+        .form-group {margin-bottom: 0.8em;}
+        label {display: block; margin-bottom: 0.2em; font-weight: bold;}
+        input[type=text], input[type=password], input[type=email], input[type=tel], input[type=number], input[type=datetime-local], select, textarea {width: 100%; padding: 0.5em; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
+        textarea {resize: vertical; height: 80px;}
+        .options {display: flex; flex-wrap: wrap; gap: 1em; margin-bottom: 1em;}
+        .option-item {flex: 1 1 160px;}
+        button {background: #3498db; color: white; border: none; padding: 0.6em 1.2em; border-radius: 4px; cursor: pointer; margin-right: 0.5em;}
+        button:hover {background: #2980b9;}
+        #qrcode {margin: 1em 0; text-align: center;}
+        #historyList {list-style: none; padding: 0; margin: 0;}
+        #historyList li {padding: 0.5em; border-bottom: 1px solid #ddd; cursor: pointer;}
+        #historyList li:hover {background: #f0f0f0;}
+        .batch-section {background: #f1f1f1; padding: 1em; border-radius: 4px; margin-top: 1em;}
+    </style>
+</head>
+<body>
+<header>
+    <h1>QR Code Creator</h1>
+    <p>Create various QR codes with live preview and customizable options.</p>
+</header>
+<main>
+    <div class="form-group">
+        <label for="qrType">QR Code Type</label>
+        <select id="qrType">
+            <option value="text">Text / URL</option>
+            <option value="wifi">Wi‑Fi Network</option>
+            <option value="vcard">vCard Contact</option>
+            <option value="email">Email</option>
+            <option value="sms">SMS</option>
+            <option value="phone">Phone Call</option>
+            <option value="geo">Geo Location</option>
+            <option value="event">Calendar Event</option>
+            <option value="batch">Batch (list)</option>
+        </select>
+    </div>
+    <div id="fieldsContainer"></div>
+
+    <div class="options" id="optionsContainer">
+        <div class="option-item">
+            <label for="size">QR Size (px)</label>
+            <input type="number" id="size" min="100" max="2048" value="512">
+        </div>
+        <div class="option-item">
+            <label for="ecLevel">Error Correction Level</label>
+            <select id="ecLevel">
+                <option value="L">Low (L)</option>
+                <option value="M">Medium (M)</option>
+                <option value="Q">Quartile (Q)</option>
+                <option value="H" selected>High (H)</option>
+            </select>
+        </div>
+        <div class="option-item">
+            <label for="darkColor">Foreground Color</label>
+            <input type="color" id="darkColor" value="#000000">
+        </div>
+        <div class="option-item">
+            <label for="lightColor">Background Color</label>
+            <input type="color" id="lightColor" value="#ffffff">
+        </div>
+    </div>
+
+    <div id="qrcode"></div>
+
+    <button id="generateBtn">Generate QR</button>
+    <button id="downloadBtn">Download PNG</button>
+    <button id="saveBtn">Save to History</button>
+
+    <section class="batch-section" id="batchSection" style="display:none;">
+        <h3>Batch Mode</h3>
+        <p>Enter one value per line (only text/URL type supported in batch).</p>
+        <textarea id="batchInput" placeholder="Enter items here...\nOne per line."></textarea>
+        <button id="batchGenerateBtn">Generate & Download Zip</button>
+    </section>
+
+    <section>
+        <h3>History</h3>
+        <ul id="historyList"></ul>
+    </section>
+</main>
+
+<script>
+// Show appropriate input fields based on type
+function showFields() {
+    const type = document.getElementById('qrType').value;
+    const container = document.getElementById('fieldsContainer');
+    const batchSection = document.getElementById('batchSection');
+    container.innerHTML = '';
+    batchSection.style.display = (type === 'batch') ? 'block' : 'none';
+    document.getElementById('optionsContainer').style.display = (type === 'batch') ? 'none' : 'flex';
+    // Helper to add inputs
+    const addInput = (id, label, typeAttr='text', placeholder='') => {
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        const lbl = document.createElement('label');
+        lbl.setAttribute('for', id);
+        lbl.innerText = label;
+        const input = document.createElement('input');
+        input.setAttribute('id', id);
+        input.setAttribute('type', typeAttr);
+        if (placeholder) input.setAttribute('placeholder', placeholder);
+        div.appendChild(lbl);
+        div.appendChild(input);
+        container.appendChild(div);
+    };
+    const addCheckbox = (id, label) => {
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        const lbl = document.createElement('label');
+        lbl.innerText = label;
+        const input = document.createElement('input');
+        input.setAttribute('id', id);
+        input.setAttribute('type', 'checkbox');
+        div.appendChild(lbl);
+        div.appendChild(input);
+        container.appendChild(div);
+    };
+    switch(type) {
+        case 'text':
+            addInput('textData', 'Text or URL');
+            break;
+        case 'wifi':
+            addInput('wifiSsid', 'SSID');
+            addInput('wifiEncryption', 'Encryption (WPA, WEP, nopass)', 'text', 'WPA');
+            addInput('wifiPassword', 'Password', 'password');
+            addCheckbox('wifiHidden', 'Hidden Network?');
+            break;
+        case 'vcard':
+            addInput('vFirstName', 'First Name');
+            addInput('vLastName', 'Last Name');
+            addInput('vPhone', 'Phone Number', 'tel');
+            addInput('vEmail', 'Email', 'email');
+            addInput('vOrg', 'Organization (optional)');
+            break;
+        case 'email':
+            addInput('emailTo', 'To', 'email');
+            addInput('emailSubject', 'Subject');
+            addInput('emailBody', 'Body');
+            break;
+        case 'sms':
+            addInput('smsNumber', 'Phone Number', 'tel');
+            addInput('smsMessage', 'Message');
+            break;
+        case 'phone':
+            addInput('phoneNumber', 'Phone Number', 'tel');
+            break;
+        case 'geo':
+            addInput('geoLat', 'Latitude', 'number', 'e.g. 37.7749');
+            addInput('geoLng', 'Longitude', 'number', 'e.g. -122.4194');
+            addInput('geoLabel', 'Label (optional)');
+            break;
+        case 'event':
+            addInput('eventTitle', 'Event Title');
+            addInput('eventLocation', 'Location');
+            addInput('eventStart', 'Start Date & Time', 'datetime-local');
+            addInput('eventEnd', 'End Date & Time', 'datetime-local');
+            break;
+        case 'batch':
+            // nothing to add here, handled by batch section
+            break;
+    }
+    // After creating fields, attach live preview listeners
+    setupLivePreview();
+    // Update preview on type change
+    updatePreview();
+}
+
+// Build payload string for QR based on input values
+function buildPayload() {
+    const type = document.getElementById('qrType').value;
+    if (type === 'batch') return '';
+    switch(type) {
+        case 'text':
+            return document.getElementById('textData').value;
+        case 'wifi':
+            const ssid = document.getElementById('wifiSsid').value;
+            const enc = document.getElementById('wifiEncryption').value || 'WPA';
+            const pwd = document.getElementById('wifiPassword').value;
+            const hidden = document.getElementById('wifiHidden').checked ? 'true' : 'false';
+            return `WIFI:T:${enc};S:${ssid};P:${pwd};H:${hidden};;`;
+        case 'vcard':
+            const fn = document.getElementById('vFirstName').value;
+            const ln = document.getElementById('vLastName').value;
+            const phone = document.getElementById('vPhone').value;
+            const email = document.getElementById('vEmail').value;
+            const org = document.getElementById('vOrg').value;
+            return `BEGIN:VCARD\nVERSION:3.0\nN:${ln};${fn}\nFN:${fn} ${ln}\nORG:${org}\nTEL;TYPE=CELL:${phone}\nEMAIL:${email}\nEND:VCARD`;
+        case 'email':
+            const to = document.getElementById('emailTo').value;
+            const sub = encodeURIComponent(document.getElementById('emailSubject').value);
+            const body = encodeURIComponent(document.getElementById('emailBody').value);
+            return `mailto:${to}?subject=${sub}&body=${body}`;
+        case 'sms':
+            const smsNum = document.getElementById('smsNumber').value;
+            const smsMsg = encodeURIComponent(document.getElementById('smsMessage').value);
+            return `SMSTO:${smsNum}:${smsMsg}`;
+        case 'phone':
+            return `tel:${document.getElementById('phoneNumber').value}`;
+        case 'geo':
+            const lat = document.getElementById('geoLat').value;
+            const lng = document.getElementById('geoLng').value;
+            const label = document.getElementById('geoLabel').value;
+            return `geo:${lat},${lng}?q=${encodeURIComponent(label)}`;
+        case 'event':
+            const title = document.getElementById('eventTitle').value;
+            const loc = document.getElementById('eventLocation').value;
+            const start = document.getElementById('eventStart').value.replace(/[-:]/g, '').replace('T','');
+            const end = document.getElementById('eventEnd').value.replace(/[-:]/g, '').replace('T','');
+            return `BEGIN:VEVENT\nSUMMARY:${title}\nLOCATION:${loc}\nDTSTART:${start}\nDTEND:${end}\nEND:VEVENT`;
+    }
+    return '';
+}
+
+// Draw QR code preview
+function drawQRCode(payload) {
+    const qrDiv = document.getElementById('qrcode');
+    qrDiv.innerHTML = '';
+    if (!payload) return;
+    const size = parseInt(document.getElementById('size').value) || 512;
+    const ecLevel = document.getElementById('ecLevel').value;
+    const darkColor = document.getElementById('darkColor').value;
+    const lightColor = document.getElementById('lightColor').value;
+    new QRCode(qrDiv, {
+        text: payload,
+        width: size,
+        height: size,
+        colorDark: darkColor,
+        colorLight: lightColor,
+        correctLevel: QRErrorCorrectLevel[ecLevel]
+    });
+}
+
+// Debounce timer for preview updates
+let previewTimer;
+function updatePreview() {
+    // Debounce to limit frequent rendering
+    if (previewTimer) clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => {
+        const type = document.getElementById('qrType').value;
+        if (type === 'batch') {
+            document.getElementById('qrcode').innerHTML = '';
+            return;
+        }
+        const payload = buildPayload();
+        if (!payload) {
+            document.getElementById('qrcode').innerHTML = '';
+            return;
+        }
+        drawQRCode(payload);
+    }, 250);
+}
+
+// Attach listeners for live preview
+function setupLivePreview() {
+    const fieldsContainer = document.getElementById('fieldsContainer');
+    // Add input/change listeners to dynamic fields
+    const dynamicInputs = fieldsContainer.querySelectorAll('input, textarea, select');
+    dynamicInputs.forEach(el => {
+        el.removeEventListener('input', updatePreview);
+        el.removeEventListener('change', updatePreview);
+        el.addEventListener('input', updatePreview);
+        el.addEventListener('change', updatePreview);
+    });
+    // Options listeners
+    ['size','ecLevel','darkColor','lightColor'].forEach(id => {
+        const el = document.getElementById(id);
+        el.removeEventListener('input', updatePreview);
+        el.removeEventListener('change', updatePreview);
+        el.addEventListener('input', updatePreview);
+        el.addEventListener('change', updatePreview);
+    });
+}
+
+// Manual generation (for user button)
+function manualGenerate() {
+    const type = document.getElementById('qrType').value;
+    if (type === 'batch') {
+        alert('Use batch generate button below for batch mode.');
+        return;
+    }
+    const payload = buildPayload();
+    if (!payload) {
+        alert('Please fill in required fields.');
+        return;
+    }
+    drawQRCode(payload);
+}
+
+// Download PNG
+function downloadPNG() {
+    const canvas = document.querySelector('#qrcode canvas');
+    if (!canvas) { alert('Please generate a QR code first.'); return; }
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = 'qr-code.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Save to history
+function saveHistory() {
+    const type = document.getElementById('qrType').value;
+    if (type === 'batch') { alert('Batch mode cannot be saved to history.'); return; }
+    const payload = buildPayload();
+    if (!payload) { alert('Nothing to save.'); return; }
+    const history = JSON.parse(localStorage.getItem('qrHistory') || '[]');
+    history.push({type, payload, date: new Date().toISOString()});
+    localStorage.setItem('qrHistory', JSON.stringify(history));
+    initHistory();
+    alert('Saved to history!');
+}
+
+// Load history into list
+function initHistory() {
+    const history = JSON.parse(localStorage.getItem('qrHistory') || '[]');
+    const list = document.getElementById('historyList');
+    list.innerHTML = '';
+    history.slice().reverse().forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = new Date(item.date).toLocaleString() + ' - ' + item.type;
+        li.onclick = () => {
+            document.getElementById('qrType').value = item.type;
+            showFields();
+            // Prefill only for simple text types
+            if (item.type === 'text') document.getElementById('textData').value = item.payload;
+            updatePreview();
+        };
+        list.appendChild(li);
+    });
+}
+
+// Batch generation: produce zip of PNG files
+async function generateBatchZip() {
+    const raw = document.getElementById('batchInput').value.trim();
+    if (!raw) { alert('Please enter at least one item.'); return; }
+    const items = raw.split(/\n+/).filter(x => x.trim() !== '');
+    const zip = new JSZip();
+    const size = parseInt(document.getElementById('size').value) || 512;
+    const ecLevel = document.getElementById('ecLevel').value;
+    const darkColor = document.getElementById('darkColor').value;
+    const lightColor = document.getElementById('lightColor').value;
+    for (let i = 0; i < items.length; i++) {
+        const tempDiv = document.createElement('div');
+        new QRCode(tempDiv, {
+            text: items[i],
+            width: size,
+            height: size,
+            colorDark: darkColor,
+            colorLight: lightColor,
+            correctLevel: QRErrorCorrectLevel[ecLevel]
+        });
+        await new Promise(res => setTimeout(res, 50));
+        const canvas = tempDiv.querySelector('canvas');
+        const dataUri = canvas.toDataURL('image/png');
+        const blob = await fetch(dataUri).then(r => r.blob());
+        zip.file(`qr_${i+1}.png`, blob);
+        tempDiv.remove();
+    }
+    zip.generateAsync({type: 'blob'}).then(content => {
+        saveAs(content, 'qr_batch.zip');
+    });
+}
+
+// Initialize page
+function init() {
+    document.getElementById('qrType').addEventListener('change', () => { showFields(); });
+    document.getElementById('generateBtn').addEventListener('click', manualGenerate);
+    document.getElementById('downloadBtn').addEventListener('click', downloadPNG);
+    document.getElementById('saveBtn').addEventListener('click', saveHistory);
+    document.getElementById('batchGenerateBtn').addEventListener('click', generateBatchZip);
+    showFields();
+    initHistory();
+    // Warn if QRCode library failed to load (e.g. offline environment)
+    setTimeout(() => {
+        if (typeof QRCode === 'undefined') {
+            const qrDiv = document.getElementById('qrcode');
+            qrDiv.innerHTML = '';
+            const warn = document.createElement('div');
+            warn.style.color = '#e74c3c';
+            warn.style.margin = '1em 0';
+            warn.textContent = 'QR library did not load. Please ensure you are connected to the internet.';
+            qrDiv.appendChild(warn);
+        }
+    }, 500);
+}
+// Start
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
