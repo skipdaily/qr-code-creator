@@ -15,16 +15,303 @@
         main {padding: 1em; max-width: 800px; margin: 0 auto;}
         .form-group {margin-bottom: 0.8em;}
         label {display: block; margin-bottom: 0.2em; font-weight: bold;}
-        input[type=text], input[type=password], input[type=email], input[type=tel], input[type=number], input[type=datetime-local], select, textarea {width: 100%; padding: 0.5em; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
-        textarea {resize: vertical; height: 80px;}
-        .options {display: flex; flex-wrap: wrap; gap: 1em; margin-bottom: 1em;}
-        .option-item {flex: 1 1 160px;}
-        button {background: #3498db; color: white; border: none; padding: 0.6em 1.2em; border-radius: 4px; cursor: pointer; margin-right: 0.5em;}
-        button:hover {background: #2980b9;}
-        #qrcode {margin: 1em 0; text-align: center;}
-        #historyList {list-style: none; padding: 0; margin: 0;}
-        #historyList li {padding: 0.5em; border-bottom: 1px solid #ddd; cursor: pointer;}
-        #historyList li:hover {background: #f0f0f0;}
+              :root {
+              --primary: #6366f1;
+              --primary-hover: #4f46e5;
+              --surface: #ffffff;
+              --surface-alt: #f0f0f0;
+              --border: #e5e7eb;
+              --text-primary: #111827;
+              --text-secondary: #6b7280;
+              --radius: 12px;
+            }
+            @media (prefers-color-scheme: dark) {
+              :root {
+                --primary: #8b5cf6;
+                --primary-hover: #7c3aed;
+                --surface: #181828;
+                --surface-alt: #1f2937;
+                --border: #374151;
+                --text-primary: #f9fafb;
+                --text-secondary: #9ca3af;
+              }
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, Inter, Roboto, Arial, sans-serif;
+              margin: 0;
+              padding: 0;
+              background: var(--surface);
+              color: var(--text-primary);
+            }
+            header {
+              background: var(--primary);
+              color: #fff;
+              padding: 1rem;
+              text-align: center;
+              border-bottom: 1px solid var(--border);
+            }
+            main {
+              padding: 1rem;
+              max-width: 800px;
+              margin: 0 auto;
+            }
+            .form-group {
+              margin-bottom: 1rem;
+            }
+            label {
+              display: block;
+              margin-bottom: 0.25rem;
+              font-weight: 600;
+              color: var(--text-primary);
+            }
+            input,
+            select,
+            textarea {
+              width: 100%;
+              padding: 0.75rem;
+              border: 1px solid var(--border);
+              border-radius: var(--radius);
+              background: var(--surface-alt);
+              color: var(--text-primary);
+              box-sizing: border-box;
+            }
+            textarea {
+              resize: vertical;
+              min-height: 80px;
+            }
+            .options {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 1rem;
+              margin-bottom: 1rem;
+            }
+            .option-item {
+              flex: 1 1 160px;
+            }
+            button {
+              background: var(--primary);
+              color: #fff;
+              border: none;
+              padding: 0.75rem 1.25rem;
+              border-radius: var(--radius);
+              cursor: pointer;
+              margin-right: 0.5rem;
+              font-weight: 600;
+            }
+            button:hover {
+              background: var(--primary-hover);
+            }
+            button.secondary {
+              background: var(--surface);
+              color: var(--primary);
+              border: 1px solid var(--primary);
+            }
+            button.secondary:hover {
+              background: var(--primary);
+              color: #fff;
+            }
+            #historyList li {
+              padding: 0.75rem;
+              border-bottom: 1px solid var(--border);
+              cursor: pointer;
+            }
+            #historyList li:hover {
+              background: var(--surface-alt);
+            }
+            .batch-section {
+              background: var(--surface-alt);
+              padding: 1rem;
+              border-radius: var(--radius);
+              margin-top: 1rem;
+            }
+            @media (max-width: 600px) {
+              .options {
+                flex-direction: column;
+              }
+              .option-item {
+                flex: 1 1 100%;
+              }
+   
+/* Modern UI overrides */
+:root {
+  --primary: #0f172a;
+  --accent: #3b82f6;
+  --background: #f9fafb;
+  --surface: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border-radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #111827;
+    --accent: #3b82f6;
+    --background: #1f2937;
+    --surface: #111827;
+    --text: #f9fafb;
+    --muted: #9ca3af;
+  }
+}
+body {
+  margin:0;
+  padding:0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--background);
+  color: var(--text);
+}
+header {
+  background: var(--primary);
+  color: var(--surface);
+  padding: 1.5rem 1rem;
+  text-align:center;
+  border-bottom: 3px solid var(--accent);
+}
+header h1 {
+  margin:0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+header p {
+  margin-top:0.3rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+main {
+  padding: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.form-group {
+  margin-bottom: 0.8rem;
+}
+label {
+  display:block;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+input[type="password"],
+input[type="datetime-local"],
+select,
+textarea {
+  width:100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #d1d5db;
+  border-radius: var(--border-radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1rem;
+}
+input[type="color"] {
+  width: 48px;
+  height: 48px;
+  border: none;
+  padding: 0;
+}
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.options .option-item {
+  flex: 1 1 calc(50% - 0.5rem);
+}
+#qrcode {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  padding: 1rem;
+  background: var(--surface);
+  border: 2px dashed #d1d5db;
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+}
+button {
+  display:inline-block;
+  padding: 0.75rem 1rem;
+  margin-right: 0.5rem;
+  border-radius: var(--border-radius);
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+button#generateBtn {background: var(--accent); color: #fff;}
+button#downloadBtn {background: var(--primary); color: var(--surface);}
+button#saveBtn {background: var(--muted); color: var(--surface);}
+button:disabled {opacity: 0.6; cursor: not-allowed;}
+.batch-section {
+  background: var(--surface);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  margin-top:1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+#batchGenerateBtn {
+  background: var(--accent);
+  color: #fff;
+}
+section {
+  background: var(--surface);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  margin-top: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+section h3 {
+  margin-top:0;
+}
+#historyList {
+  list-style: none;
+  padding-left:0;
+}
+#historyList li {
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+#historyList li:last-child {
+  border-bottom:none;
+}
+#historyList button {
+  background: transparent;
+  border:none;
+  color: var(--accent);
+  font-size: 0.9rem;
+  cursor:pointer;
+}
+@media (max-width: 600px) {
+  header h1 {
+    font-size: 1.4rem;
+  }
+  .options .option-item {
+    flex: 1 1 100%;
+  }
+  button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  button#downloadBtn, button#saveBtn {
+    margin-top: 0.5rem;
+  }
+}
+
+                
+                button {
+                width: 100%;
+                margin-right: 0;
+              }
+            }
+      #historyList li:hover {background: #f0f0f0;}
         .batch-section {background: #f1f1f1; padding: 1em; border-radius: 4px; margin-top: 1em;}
     </style>
 </head>
