@@ -311,6 +311,35 @@ section h3 {
                 margin-right: 0;
               }
             }
+    /* Type scroll styles */
+    .type-scroll {
+        display: flex;
+        overflow-x: auto;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+    }
+    .type-item {
+        background: var(--surface);
+        color: var(--text);
+        font-size: 0.9rem;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    .type-item.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+    }   
+        
+    /* Hide default select and label */
+    .form-group label[for="qrType"],
+    #qrType {
+        display: none;
+    }
+
+        
+        
       #historyList li:hover {background: #f0f0f0;}
         .batch-section {background: #f1f1f1; padding: 1em; border-radius: 4px; margin-top: 1em;}
     </style>
@@ -321,7 +350,20 @@ section h3 {
     <p>Create various QR codes with live preview and customizable options.</p>
 </header>
 <main>
-    <div class="form-group">
+    <    <div class="type-scroll" id="typeScroll">
+     <div class="type-item active" data-type="text"><span class="icon">🔗</span><span class="label">Text/URL</span></div>
+        <div class="type-item" data-type="wifi"><span class="icon">📶</span><span class="label">Wi-Fi</span></div>
+        <div class="type-item" data-type="vcard"><span class="icon">👤</span><span class="label">vCard</span></div>
+        <div class="type-item" data-type="email"><span class="icon">✉️</span><span class="label">Email</span></div>
+        <div class="type-item" data-type="sms"><span class="icon">📣</span><span class="label">SMS</span></div>
+        <div class="type-item" data-type="phone"><span class="icon">📞</span><span class="label">Phone</span></div>
+        <div class="type-item" data-type="geo"><span class="icon">📍</span><span class="label">Geo</span></div>
+        <div class="type-item" data-type="event"><span class="icon">📅</span><span class="label">Event</span></div>
+        <div class="type-item" data-type="batch"><span class="icon">🗂️</span><span class="label">Batch</span></div>
+    </div>
+
+        
+        div class="form-group">
         <label for="qrType">QR Code Type</label>
         <select id="qrType">
             <option value="text">Text / URL</option>
@@ -665,6 +707,22 @@ async function generateBatchZip() {
 
 // Initialize page
 function init() {
+
+    // Setup horizontal type scroll interactions
+    function setupTypeScroll() {
+        const container = document.getElementById('typeScroll');
+        if (!container) return;
+        const items = container.querySelectorAll('.type-item');
+        items.forEach(item => {
+            item.addEventListener('click', () => {
+                items.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                const type = item.getAttribute('data-type');
+                document.getElementById('qrType').value = type;
+                showFields();
+            });
+        });
+    }
     document.getElementById('qrType').addEventListener('change', () => { showFields(); });
     document.getElementById('generateBtn').addEventListener('click', manualGenerate);
     document.getElementById('downloadBtn').addEventListener('click', downloadPNG);
@@ -673,6 +731,7 @@ function init() {
     showFields();
     initHistory();
     // Warn if QRCode library failed to load (e.g. offline environment)
+     setupTypeScroll();
     setTimeout(() => {
         if (typeof QRCode === 'undefined') {
             const qrDiv = document.getElementById('qrcode');
