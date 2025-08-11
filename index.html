@@ -240,7 +240,7 @@ function drawQRCode(payload) {
         height: size,
         colorDark: darkColor,
         colorLight: lightColor,
-        correctLevel: QRErrorCorrectLevel[ecLevel]
+        correctLevel: QRCode.CorrectLevel[ecLevel]
     });
 }
 
@@ -362,7 +362,7 @@ async function generateBatchZip() {
             height: size,
             colorDark: darkColor,
             colorLight: lightColor,
-            correctLevel: QRErrorCorrectLevel[ecLevel]
+            correctLevel: QRCode.CorrectLevel[ecLevel]
         });
         await new Promise(res => setTimeout(res, 50));
         const canvas = tempDiv.querySelector('canvas');
